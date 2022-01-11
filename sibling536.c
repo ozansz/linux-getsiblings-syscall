@@ -20,7 +20,6 @@ SYSCALL_DEFINE3(getsiblings, pid_t , pid, pid_t __user *, pidbuf, int, capacity)
     struct task_struct *p, *c;
 
     if (__SIBLINGS_DEBUG) printk("getsiblings() EPERM = %d, ESRCH = %d, EINVAL = %d\n\n", EPERM, ESRCH, EINVAL);
-
     if (__SIBLINGS_DEBUG) printk("getsiblings(): pid: %d, pidbuf: %p, capacity: %d, current: %p\n", pid, pidbuf, capacity, current);
 
     if (capacity <= 0) {
@@ -35,10 +34,11 @@ SYSCALL_DEFINE3(getsiblings, pid_t , pid, pid_t __user *, pidbuf, int, capacity)
 
     // START SYNC
     if (__SIBLINGS_DEBUG) printk("getsiblings(): locking tasklist_lock...\n");
+    
     read_lock(&tasklist_lock);
+    
     if (__SIBLINGS_DEBUG) printk("getsiblings(): locking tasklist_lock OK\n");
 
-    // Q: current->real_cred or current->cred ?
     user_id = current->real_cred->uid.val;
 
     if (pid == 0)
@@ -49,8 +49,11 @@ SYSCALL_DEFINE3(getsiblings, pid_t , pid, pid_t __user *, pidbuf, int, capacity)
         if (NULL == p) {
             if (__SIBLINGS_DEBUG) printk("getsiblings(): p == %p, returning -ESRCH\n", p);
             if (__SIBLINGS_DEBUG) printk("getsiblings(): unlocking tasklist_lock...\n");
+            
             read_unlock(&tasklist_lock);
+            
             if (__SIBLINGS_DEBUG) printk("getsiblings(): unlocking tasklist_lock OK\n");
+            
             return -ESRCH;
         }
     }
@@ -63,8 +66,11 @@ SYSCALL_DEFINE3(getsiblings, pid_t , pid, pid_t __user *, pidbuf, int, capacity)
     if ((user_id != 0) && (proc_user_id != user_id)) {
         if (__SIBLINGS_DEBUG) printk("getsiblings(): returning -EPERM\n");
         if (__SIBLINGS_DEBUG) printk("getsiblings(): unlocking tasklist_lock...\n");
+        
         read_unlock(&tasklist_lock);
+        
         if (__SIBLINGS_DEBUG) printk("getsiblings(): unlocking tasklist_lock OK\n");
+        
         return -EPERM;
     }
 
@@ -80,9 +86,10 @@ SYSCALL_DEFINE3(getsiblings, pid_t , pid, pid_t __user *, pidbuf, int, capacity)
 
     // END SYNC
     if (__SIBLINGS_DEBUG) printk("getsiblings(): unlocking tasklist_lock...\n");
-    read_unlock(&tasklist_lock);
-    if (__SIBLINGS_DEBUG) printk("getsiblings(): unlocking tasklist_lock OK\n");
 
+    read_unlock(&tasklist_lock);
+    
+    if (__SIBLINGS_DEBUG) printk("getsiblings(): unlocking tasklist_lock OK\n");
     if (__SIBLINGS_DEBUG) printk("getsiblings(): OK. Returning %d\n", index);
     return index;
 }
